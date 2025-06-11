@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Scan QR - Absensi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-xl p-6 bg-white rounded-lg shadow-lg">
+        <h2 id="infoJenis" class="text-xl font-semibold text-gray-800 mb-4 text-center"></h2>
+        <div id="reader" class="w-full"></div>
+        <div id="scanResult" class="mt-4 text-center text-gray-700 font-medium"></div>
+    </div>
+
+    <script>
+        // Ambil data user dan jenis absen dari session
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        const jenis = sessionStorage.getItem("absenJenis");
+
+        // Jika tidak ada data, kembali ke halaman login
+        if (!user || !jenis) {
+            window.location.href = "index.html";
+        }
+
+        // Tampilkan jenis absen
+        document.getElementById("infoJenis").innerText = `Silakan Scan QR untuk Absen ${jenis}`;
+
+        // Inisialisasi scanner
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: 250 },
+            false
+        );
+
+        html5QrcodeScanner.render(onScanSuccess);
+
+        function onScanSuccess(decodedText) {
+            html5QrcodeScanner.clear(); // stop scanner
+            document.getElementById("scanResult").innerHTML = `<div class="text-blue-500">Memproses absensi...</div>`;
+
+            const formData = new FormData();
+            formData.append("action", "absen");
+            formData.append("id", user.Id);
+            formData.append("nama", user.Nama);
+            formData.append("nip", user.NIP);
+            formData.append("jenis", jenis);
+            formData.append("kodeQR", decodedText);
+
+            fetch("https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec", {
+                method: "POST",
+                body: formData,
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    const color = data.status ? 'green' : 'red';
+                    const message = `
+                        <div class="text-${color}-600 font-bold mb-2">
+                            ${data.message}
+                        </div>
+                    `;
+
+                    const button = data.status ? `
+                        <button onclick="window.location.href='dashboard.html'"
+                                class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            Kembali ke Dashboard Sekarang
+                        </button>
+                    ` : '';
+
+                    document.getElementById("scanResult").innerHTML = message + button;
+
+                    if (data.status) {
+                        setTimeout(() => {
+                            window.location.href = "dashboard.html";
+                        }, 3000);
+                    }
+                })
+                .catch(() => {
+                    document.getElementById("scanResult").innerHTML = `
+                        <div class="text-red-600 font-bold">Gagal koneksi ke server</div>
+                    `;
+                });
+        }
+    </script>
+</body>
+
+</html>
