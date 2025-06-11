@@ -3,16 +3,20 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Tambahkan ini -->
     <title>Login | Absen QR</title>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4"> <!-- Tambah px-4 -->
+
     <div class="w-full max-w-md">
-        <div class="bg-white shadow-md rounded-lg px-8 py-6">
+        <div class="bg-white shadow-md rounded-lg px-6 py-8 sm:px-8"> <!-- Tambah responsive padding -->
             <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">
                 <i class="fas fa-qrcode text-blue-500 mr-2"></i>Login Absen QR
             </h2>
@@ -23,7 +27,7 @@
                     <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
                     <div class="relative mt-1">
                         <input type="text" id="username" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <div class="absolute inset-y-0 right-3 flex items-center text-gray-400">
                             <i class="fas fa-user"></i>
                         </div>
@@ -34,7 +38,7 @@
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                     <div class="relative mt-1">
                         <input type="password" id="password" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         <div class="absolute inset-y-0 right-3 flex items-center text-gray-400">
                             <i class="fas fa-lock"></i>
                         </div>
@@ -48,7 +52,7 @@
                     </button>
                 </div>
 
-                <div id="errorMsg" class="text-sm text-red-600 mt-2"></div>
+                <div id="errorMsg" class="text-sm text-red-600 mt-2 text-center"></div>
             </form>
         </div>
     </div>
