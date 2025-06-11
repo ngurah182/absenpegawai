@@ -1,153 +1,258 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Absensi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8" />
+    <title>Dashboard Absensi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- AdminLTE & Dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
-  <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
 
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-      <h2 class="text-2xl font-bold text-center sm:text-left">Selamat datang, <span id="userName" class="text-blue-600"></span></h2>
-      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded shadow">
-        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-      </button>
-    </div>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Sidebar toggle button-->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+                </li>
+            </ul>
 
-    <p class="text-gray-600 mb-6 text-center sm:text-left">Silakan pilih jenis absen atau lihat rekap di bawah ini:</p>
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item d-flex align-items-center mr-3">
+                    <span class="text-dark font-weight-bold" id="userName">Nama Admin</span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-    <!-- Tombol Absen -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-      <button onclick="scan('Datang')" class="bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg shadow-md">
-        <i class="fas fa-sign-in-alt mr-2"></i>Absen Datang
-      </button>
-      <button onclick="scan('Pulang')" class="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg shadow-md">
-        <i class="fas fa-sign-out-alt mr-2"></i>Absen Pulang
-      </button>
-      <button onclick="scan('Izin')" class="bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg shadow-md">
-        <i class="fas fa-user-clock mr-2"></i>Absen Izin
-      </button>
-      <button onclick="scan('Kembali')" class="bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-lg shadow-md">
-        <i class="fas fa-undo-alt mr-2"></i>Absen Kembali
-      </button>
-    </div>
+        <!-- Sidebar -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-link">
+                <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" alt="Logo Absen"
+                    class="brand-image img-circle elevation-3" style="opacity: .8;">
+                <span class="brand-text font-weight-light">Absen</span>
+            </a>
 
-    <!-- Tabel dan Grafik -->
-    <div class="grid md:grid-cols-2 gap-6 mb-10">
-      <!-- Tabel Absensi -->
-      <div>
-        <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-3 text-center">Data Absensi Hari Ini</h3>
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active">
+                                <i class="nav-icon fas fa-tachometer-alt"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
 
-        <div class="overflow-x-auto border border-gray-200 rounded-lg shadow max-h-[440px]">
-          <table class="table-auto min-w-full text-sm text-left text-gray-800 divide-y divide-gray-200">
-            <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10">
-              <tr>
-                <th class="px-4 py-2 whitespace-nowrap">No</th>
-                <th class="px-4 py-2 whitespace-nowrap">Nama</th>
-                <th class="px-4 py-2 whitespace-nowrap">Jenis Absen</th>
-                <th class="px-4 py-2 whitespace-nowrap">Tanggal</th>
-                <th class="px-4 py-2 whitespace-nowrap">Waktu</th>
-              </tr>
-            </thead>
-            <tbody id="absenTable" class="bg-white divide-y divide-gray-100"></tbody>
-          </table>
-        </div>
-      </div>
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="content-header">
+                <div class="container-fluid">
+                    <h3 class="text-center mb-4">Dashboard Absensi</h3>
 
-      <!-- Grafik Absensi -->
-      <div>
-        <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Grafik Absen Hari Ini</h3>
-        <div class="flex justify-center">
-          <div class="w-full max-w-[300px]">
-            <canvas id="absenChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
+                    <!-- Tombol Absen -->
+                    <div class="row mb-4 text-center">
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-success btn-block" onclick="scan('Datang')">
+                                <i class="fas fa-sign-in-alt mr-1"></i> Absen Datang
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-primary btn-block" onclick="scan('Pulang')">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Absen Pulang
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-warning btn-block" onclick="scan('Izin')">
+                                <i class="fas fa-user-clock mr-1"></i> Absen Izin
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-info btn-block" onclick="scan('Kembali')">
+                                <i class="fas fa-undo-alt mr-1"></i> Absen Kembali
+                            </button>
+                        </div>
+                    </div>
 
-    <!-- Rekap Singkat -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-gray-700 text-lg font-medium mb-6">
-      <div class="bg-green-100 rounded-lg py-2 shadow">Datang: <span id="datang" class="font-bold text-green-600">0</span></div>
-      <div class="bg-blue-100 rounded-lg py-2 shadow">Pulang: <span id="pulang" class="font-bold text-blue-600">0</span></div>
-      <div class="bg-yellow-100 rounded-lg py-2 shadow">Izin: <span id="izin" class="font-bold text-yellow-600">0</span></div>
-      <div class="bg-cyan-100 rounded-lg py-2 shadow">Kembali: <span id="kembali" class="font-bold text-cyan-600">0</span></div>
-    </div>
-  </div>
+                    <!-- Ringkasan Absen -->
+                    <div class="row text-center mb-4">
+                        <div class="col-sm-3">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h4 id="datang">0</h4>
+                                    <p>Datang</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="small-box bg-primary">
+                                <div class="inner">
+                                    <h4 id="pulang">0</h4>
+                                    <p>Pulang</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h4 id="izin">0</h4>
+                                    <p>Izin</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h4 id="kembali">0</h4>
+                                    <p>Kembali</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-  <script>
-    const user = JSON.parse(sessionStorage.getItem("user"));
-    if (!user || !user.Nama) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById("userName").textContent = user.Nama;
-    }
+                    <!-- Data Absensi & Grafik -->
+                    <div class="row">
+                        <!-- Tabel Absensi -->
+                        <div class="col-md-7">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Data Absensi Hari Ini</h5>
+                                </div>
+                                <div class="card-body table-responsive p-0" style="max-height: 400px;">
+                                    <table class="table table-hover text-nowrap">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Nama</th>
+                                                <th>Jenis Absen</th>
+                                                <th>Tanggal</th>
+                                                <th>Waktu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="absenTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
-    function logout() {
-      sessionStorage.removeItem("user");
-      window.location.href = "index.html";
-    }
+                        <!-- Grafik Absensi -->
+                        <div class="col-md-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Grafik Absensi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="absenChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    function scan(jenis) {
-      sessionStorage.setItem("absenJenis", jenis);
-      window.location.href = "scan.html";
-    }
+                </div> <!-- /.container-fluid -->
+            </div> <!-- /.content-header -->
+        </div> <!-- /.content-wrapper -->
+    </div> <!-- ./wrapper -->
 
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec";
+    <!-- Script -->
+    <script>
+        // Cek apakah user login
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user || !user.Nama) {
+            window.location.href = "index.html";
+        } else {
+            document.getElementById("userName").textContent = user.Nama;
+        }
 
-    // Rekap data
-    fetch(`${scriptURL}?action=rekap`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("datang").textContent = data.Datang || 0;
-        document.getElementById("pulang").textContent = data.Pulang || 0;
-        document.getElementById("izin").textContent = data.Izin || 0;
-        document.getElementById("kembali").textContent = data.Kembali || 0;
+        // Logout
+        function logout() {
+            sessionStorage.removeItem("user");
+            window.location.href = "index.html";
+        }
 
-        const ctx = document.getElementById("absenChart").getContext("2d");
-        new Chart(ctx, {
-          type: "pie",
-          data: {
-            labels: ["Datang", "Pulang", "Izin", "Kembali"],
-            datasets: [{
-              data: [data.Datang || 0, data.Pulang || 0, data.Izin || 0, data.Kembali || 0],
-              backgroundColor: ["#22c55e", "#3b82f6", "#facc15", "#06b6d4"]
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                position: "bottom"
-              }
-            }
-          }
-        });
-      });
+        // Redirect ke scan
+        function scan(jenis) {
+            sessionStorage.setItem("absenJenis", jenis);
+            window.location.href = "scan.html";
+        }
 
-    // Data Absensi
-    fetch(`${scriptURL}?action=list`)
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById("absenTable");
-        tbody.innerHTML = "";
-        data.forEach((item, i) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="px-4 py-2">${i + 1}</td>
-            <td class="px-4 py-2">${item.Nama || "-"}</td>
-            <td class="px-4 py-2">${item.Jenis || "-"}</td>
-            <td class="px-4 py-2">${item.Tanggal || "-"}</td>
-            <td class="px-4 py-2">${item.Waktu || "-"}</td>
+        // URL Google Apps Script
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec";
+
+        // Ambil data rekap
+        fetch(`${scriptURL}?action=rekap`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("datang").textContent = data.Datang || 0;
+                document.getElementById("pulang").textContent = data.Pulang || 0;
+                document.getElementById("izin").textContent = data.Izin || 0;
+                document.getElementById("kembali").textContent = data.Kembali || 0;
+
+                const ctx = document.getElementById("absenChart").getContext("2d");
+                new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: ["Datang", "Pulang", "Izin", "Kembali"],
+                        datasets: [{
+                            data: [
+                                data.Datang || 0,
+                                data.Pulang || 0,
+                                data.Izin || 0,
+                                data.Kembali || 0
+                            ],
+                            backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8"]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Ambil data tabel absensi
+        fetch(`${scriptURL}?action=list`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById("absenTable");
+                tbody.innerHTML = "";
+                data.forEach((item, i) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+            <td>${i + 1}</td>
+            <td>${item.Nama || "-"}</td>
+            <td>${item.Jenis || "-"}</td>
+            <td>${item.Tanggal || "-"}</td>
+            <td>${item.Waktu || "-"}</td>
           `;
-          tbody.appendChild(tr);
-        });
-      })
-      .catch(error => console.error("Gagal memuat data absensi:", error));
-  </script>
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => console.error("Gagal memuat data absensi:", err));
+    </script>
+
 </body>
+
 </html>
