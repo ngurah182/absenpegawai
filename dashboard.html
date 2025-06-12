@@ -5,7 +5,6 @@
     <meta charset="UTF-8" />
     <title>Dashboard Absensi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
     <!-- AdminLTE & Dependencies -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
@@ -19,14 +18,11 @@
     <div class="wrapper">
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-            <!-- Sidebar toggle button-->
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
                 </li>
             </ul>
-
-            <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item d-flex align-items-center mr-3">
                     <span class="text-dark font-weight-bold" id="userName">Nama Admin</span>
@@ -41,14 +37,11 @@
 
         <!-- Sidebar -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
-            <!-- Brand Logo -->
             <a href="#" class="brand-link">
                 <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" alt="Logo Absen"
                     class="brand-image img-circle elevation-3" style="opacity: .8;">
                 <span class="brand-text font-weight-light">Absen</span>
             </a>
-
-            <!-- Sidebar -->
             <div class="sidebar">
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
@@ -93,7 +86,6 @@
                         </div>
                     </div>
 
-
                     <!-- Ringkasan Absen -->
                     <div class="row text-center mb-4">
                         <div class="col-sm-3">
@@ -130,9 +122,9 @@
                         </div>
                     </div>
 
-                    <!-- Data Absensi & Grafik -->
+                    <!-- Tabel & Grafik -->
                     <div class="row">
-                        <!-- Tabel Absensi -->
+                        <!-- Tabel -->
                         <div class="col-md-7">
                             <div class="card">
                                 <div class="card-header">
@@ -155,7 +147,7 @@
                             </div>
                         </div>
 
-                        <!-- Grafik Absensi -->
+                        <!-- Grafik -->
                         <div class="col-md-5">
                             <div class="card">
                                 <div class="card-header">
@@ -168,14 +160,14 @@
                         </div>
                     </div>
 
-                </div> <!-- /.container-fluid -->
-            </div> <!-- /.content-header -->
-        </div> <!-- /.content-wrapper -->
-    </div> <!-- ./wrapper -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Script -->
     <script>
-        // Cek apakah user login
+        // Ambil data user
         const user = JSON.parse(sessionStorage.getItem("user"));
         if (!user || !user.Nama) {
             window.location.href = "index.html";
@@ -183,30 +175,54 @@
             document.getElementById("userName").textContent = user.Nama;
         }
 
-        // Logout
         function logout() {
             sessionStorage.removeItem("user");
             window.location.href = "index.html";
         }
 
-        // Redirect ke scan
         function scan(jenis) {
             sessionStorage.setItem("absenJenis", jenis);
             window.location.href = "scan.html";
         }
 
-        // URL Google Apps Script
         const scriptURL = "https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec";
 
-        // Ambil data rekap
-        fetch(`${scriptURL}?action=rekap`)
+        // Tampilkan data absensi hanya untuk user login
+        fetch(`${scriptURL}?action=list`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById("datang").textContent = data.Datang || 0;
-                document.getElementById("pulang").textContent = data.Pulang || 0;
-                document.getElementById("izin").textContent = data.Izin || 0;
-                document.getElementById("kembali").textContent = data.Kembali || 0;
+                const namaLogin = user.Nama.toLowerCase();
+                const userData = data.filter(item => item.Nama && item.Nama.toLowerCase() === namaLogin);
 
+                // Tabel
+                const tbody = document.getElementById("absenTable");
+                tbody.innerHTML = "";
+                userData.forEach((item, i) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>${item.Nama}</td>
+                        <td>${item.Jenis}</td>
+                        <td>${item.Tanggal}</td>
+                        <td>${item.Waktu}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Rekap
+                const count = { Datang: 0, Pulang: 0, Izin: 0, Kembali: 0 };
+                userData.forEach(item => {
+                    if (item.Jenis && count[item.Jenis] !== undefined) {
+                        count[item.Jenis]++;
+                    }
+                });
+
+                document.getElementById("datang").textContent = count.Datang;
+                document.getElementById("pulang").textContent = count.Pulang;
+                document.getElementById("izin").textContent = count.Izin;
+                document.getElementById("kembali").textContent = count.Kembali;
+
+                // Grafik
                 const ctx = document.getElementById("absenChart").getContext("2d");
                 new Chart(ctx, {
                     type: "pie",
@@ -214,10 +230,10 @@
                         labels: ["Datang", "Pulang", "Izin", "Kembali"],
                         datasets: [{
                             data: [
-                                data.Datang || 0,
-                                data.Pulang || 0,
-                                data.Izin || 0,
-                                data.Kembali || 0
+                                count.Datang,
+                                count.Pulang,
+                                count.Izin,
+                                count.Kembali
                             ],
                             backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8"]
                         }]
@@ -225,35 +241,13 @@
                     options: {
                         responsive: true,
                         plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
+                            legend: { position: 'bottom' }
                         }
                     }
-                });
-            });
-
-        // Ambil data tabel absensi
-        fetch(`${scriptURL}?action=list`)
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById("absenTable");
-                tbody.innerHTML = "";
-                data.forEach((item, i) => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${item.Nama || "-"}</td>
-            <td>${item.Jenis || "-"}</td>
-            <td>${item.Tanggal || "-"}</td>
-            <td>${item.Waktu || "-"}</td>
-          `;
-                    tbody.appendChild(tr);
                 });
             })
             .catch(err => console.error("Gagal memuat data absensi:", err));
     </script>
-
 </body>
 
 </html>
