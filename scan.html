@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
@@ -17,8 +19,20 @@
     <div class="w-full max-w-xl p-6 bg-white rounded-lg shadow-lg">
         <h2 id="infoJenis" class="text-xl font-semibold text-gray-800 mb-4 text-center"></h2>
 
+        <!-- Input Keterangan untuk Izin -->
+        <div id="keteranganForm" class="mb-4 text-center hidden">
+            <label for="keterangan" class="block text-gray-700 font-semibold mb-2">Keterangan Izin</label>
+            <textarea id="keterangan" rows="3"
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Contoh: Izin ke dokter"></textarea>
+            <button id="mulaiScanBtn"
+                class="mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">
+                Lanjut Scan QR
+            </button>
+        </div>
+
         <!-- Scanner -->
-        <div id="reader" class="w-full"></div>
+        <div id="reader" class="w-full hidden"></div>
 
         <!-- Tombol Batal -->
         <div class="mt-4 text-center">
@@ -33,67 +47,92 @@
     </div>
 
     <script>
-        // Ambil data user dan jenis absen dari session
         const user = JSON.parse(sessionStorage.getItem("user"));
         const jenis = sessionStorage.getItem("absenJenis");
 
-        // Jika tidak ada data, kembali ke halaman login
         if (!user || !jenis) {
             window.location.href = "index.html";
         }
 
-        // Tampilkan jenis absen
         document.getElementById("infoJenis").innerText = `Silakan Scan QR untuk Absen ${jenis}`;
+        const reader = document.getElementById("reader");
+        const formIzin = document.getElementById("keteranganForm");
+        const mulaiScanBtn = document.getElementById("mulaiScanBtn");
 
-        // Inisialisasi scanner
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: 250 },
-            false
-        );
+        if (jenis === "Izin") {
+            formIzin.classList.remove("hidden");
+        } else {
+            reader.classList.remove("hidden");
+            startScanner();
+        }
 
-        html5QrcodeScanner.render(onScanSuccess);
-
-        function onScanSuccess(decodedText) {
-            html5QrcodeScanner.clear(); // Stop scanner
-            document.getElementById("scanResult").innerHTML = `<div class="text-blue-500">Memproses absensi...</div>`;
-
-            const formData = new FormData();
-            formData.append("action", "absen");
-            formData.append("id", user.Id);
-            formData.append("nama", user.Nama);
-            formData.append("nip", user.NIP);
-            formData.append("jenis", jenis);
-            formData.append("kodeQR", decodedText);
-
-            fetch("https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec", {
-                method: "POST",
-                body: formData,
-            })
-                .then(res => res.json())
-                .then(data => {
-                    const color = data.status ? 'green' : 'red';
-                    const message = `<div class="text-${color}-600 font-bold mb-2">${data.message}</div>`;
-
-                    const button = data.status ? `
-            <button onclick="window.location.href='dashboard.html'"
-              class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-              Kembali ke Dashboard Sekarang
-            </button>
-          ` : '';
-
-                    document.getElementById("scanResult").innerHTML = message + button;
-
-                    if (data.status) {
-                        setTimeout(() => {
-                            window.location.href = "dashboard.html";
-                        }, 3000);
-                    }
-                })
-                .catch(() => {
-                    document.getElementById("scanResult").innerHTML =
-                        `<div class="text-red-600 font-bold">Gagal koneksi ke server</div>`;
+        mulaiScanBtn?.addEventListener("click", () => {
+            const ket = document.getElementById("keterangan").value.trim();
+            if (ket === "") {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Keterangan kosong",
+                    text: "Silakan isi keterangan terlebih dahulu.",
                 });
+                return;
+            }
+            user.Keterangan = ket;
+            formIzin.classList.add("hidden");
+            reader.classList.remove("hidden");
+            startScanner();
+        });
+
+        function startScanner() {
+            const html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: 250 },
+                false
+            );
+            html5QrcodeScanner.render(onScanSuccess);
+
+            function onScanSuccess(decodedText) {
+                html5QrcodeScanner.clear();
+                document.getElementById("scanResult").innerHTML = `<div class="text-blue-500">Memproses absensi...</div>`;
+
+                const formData = new FormData();
+                formData.append("action", "absen");
+                formData.append("id", user.Id);
+                formData.append("nama", user.Nama);
+                formData.append("nip", user.NIP);
+                formData.append("jenis", jenis);
+                formData.append("kodeQR", decodedText);
+                if (jenis === "Izin") {
+                    formData.append("keterangan", user.Keterangan || "");
+                }
+
+                fetch("https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec", {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        Swal.fire({
+                            icon: data.status ? "success" : "error",
+                            title: data.status ? "Berhasil!" : "Gagal!",
+                            text: data.message,
+                            timer: 3000,
+                            showConfirmButton: data.status ? false : true
+                        });
+
+                        if (data.status) {
+                            setTimeout(() => {
+                                window.location.href = "dashboard.html";
+                            }, 3000);
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Gagal",
+                            text: "Tidak dapat menghubungi server.",
+                        });
+                    });
+            }
         }
     </script>
 </body>
