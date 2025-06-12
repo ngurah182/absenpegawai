@@ -5,12 +5,16 @@
     <meta charset="UTF-8">
     <title>Scan QR - Absensi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
@@ -111,18 +115,26 @@
                 })
                     .then(res => res.json())
                     .then(data => {
-                        Swal.fire({
-                            icon: data.status ? "success" : "error",
-                            title: data.status ? "Berhasil!" : "Gagal!",
-                            text: data.message,
-                            timer: 3000,
-                            showConfirmButton: data.status ? false : true
-                        });
-
                         if (data.status) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Berhasil!",
+                                text: data.message,
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
                             setTimeout(() => {
                                 window.location.href = "dashboard.html";
                             }, 3000);
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Gagal!",
+                                text: data.message,
+                                confirmButtonText: "Kembali"
+                            }).then(() => {
+                                window.location.href = "dashboard.html";
+                            });
                         }
                     })
                     .catch(() => {
@@ -130,6 +142,9 @@
                             icon: "error",
                             title: "Gagal",
                             text: "Tidak dapat menghubungi server.",
+                            confirmButtonText: "Kembali"
+                        }).then(() => {
+                            window.location.href = "dashboard.html";
                         });
                     });
             }
