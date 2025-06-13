@@ -28,12 +28,22 @@
             <label for="keterangan" class="block text-gray-700 font-semibold mb-2">Keterangan Izin</label>
             <textarea id="keterangan" rows="3"
                 class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Contoh: Izin ke dokter"></textarea>
+                placeholder="Input Keterangan"></textarea>
+
+            <!-- Input file hanya ditampilkan jika jenis adalah "Tidak Masuk" -->
+            <div id="fileUploadContainer" class="mt-3 hidden">
+                <label for="suratIzin" class="block text-gray-700 font-semibold mb-2">Upload Surat Izin</label>
+                <input type="file" id="suratIzin"
+                    class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    accept=".jpg,.jpeg,.png,.pdf" />
+            </div>
+
             <button id="mulaiScanBtn"
                 class="mt-3 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">
                 Lanjut Scan QR
             </button>
         </div>
+
 
         <!-- Scanner -->
         <div id="reader" class="w-full hidden"></div>
@@ -51,6 +61,8 @@
     </div>
 
     <script>
+        const ABSEN_URL = "https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec";
+
         const user = JSON.parse(sessionStorage.getItem("user"));
         const jenis = sessionStorage.getItem("absenJenis");
 
@@ -58,98 +70,129 @@
             window.location.href = "index.html";
         }
 
-        document.getElementById("infoJenis").innerText = `Silakan Scan QR untuk Absen ${jenis}`;
+        document.getElementById("infoJenis").innerText =
+            `Silakan ${jenis === "Tidak Masuk" ? "Isi Keterangan & Upload Surat" : "Scan QR"} untuk Absen ${jenis}`;
+
         const reader = document.getElementById("reader");
         const formIzin = document.getElementById("keteranganForm");
         const mulaiScanBtn = document.getElementById("mulaiScanBtn");
+        const fileInput = document.getElementById("suratIzin");
 
-        if (jenis === "Izin") {
+        if (jenis === "Izin" || jenis === "Tidak Masuk") {
             formIzin.classList.remove("hidden");
+            mulaiScanBtn.textContent = "Kirim";
+
+            const fileContainer = document.getElementById("fileUploadContainer");
+            if (jenis === "Tidak Masuk") {
+                fileContainer.classList.remove("hidden");
+            } else {
+                fileContainer.classList.add("hidden");
+            }
+
+
+            mulaiScanBtn.addEventListener("click", async () => {
+                const ket = document.getElementById("keterangan").value.trim();
+                const file = fileInput.files[0];
+
+                if (ket === "") {
+                    Swal.fire({ icon: "warning", title: "Keterangan kosong", text: "Silakan isi keterangan terlebih dahulu." });
+                    return;
+                }
+
+                if (jenis === "Tidak Masuk") {
+                    if (!file) {
+                        Swal.fire({ icon: "warning", title: "File belum dipilih", text: "Silakan unggah surat izin terlebih dahulu." });
+                        return;
+                    }
+
+                    const base64Data = await toBase64(file);
+                    await uploadSurat(base64Data, file.name);
+                    kirimAbsen("", ket);
+                } else {
+                    // Jenis Izin, simpan keterangan lalu lanjut QR
+                    user.Keterangan = ket;
+                    formIzin.classList.add("hidden");
+                    reader.classList.remove("hidden");
+                    startScanner();
+                }
+            });
         } else {
             reader.classList.remove("hidden");
             startScanner();
         }
 
-        mulaiScanBtn?.addEventListener("click", () => {
-            const ket = document.getElementById("keterangan").value.trim();
-            if (ket === "") {
-                Swal.fire({
-                    icon: "warning",
-                    title: "Keterangan kosong",
-                    text: "Silakan isi keterangan terlebih dahulu.",
-                });
-                return;
-            }
-            user.Keterangan = ket;
-            formIzin.classList.add("hidden");
-            reader.classList.remove("hidden");
-            startScanner();
-        });
-
         function startScanner() {
-            const html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader",
-                { fps: 10, qrbox: 250 },
-                false
-            );
-            html5QrcodeScanner.render(onScanSuccess);
-
-            function onScanSuccess(decodedText) {
+            const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+            html5QrcodeScanner.render((decodedText) => {
                 html5QrcodeScanner.clear();
                 document.getElementById("scanResult").innerHTML = `<div class="text-blue-500">Memproses absensi...</div>`;
+                kirimAbsen(decodedText, user.Keterangan || "");
+            });
+        }
 
-                const formData = new FormData();
-                formData.append("action", "absen");
-                formData.append("id", user.Id);
-                formData.append("nama", user.Nama);
-                formData.append("nip", user.NIP);
-                formData.append("jenis", jenis);
-                formData.append("kodeQR", decodedText);
-                if (jenis === "Izin") {
-                    formData.append("keterangan", user.Keterangan || "");
-                }
+        function kirimAbsen(kodeQR, keterangan) {
+            const formData = new FormData();
+            formData.append("action", "absen");
+            formData.append("id", user.Id);
+            formData.append("nama", user.Nama);
+            formData.append("nip", user.NIP);
+            formData.append("jenis", jenis);
+            formData.append("kodeQR", kodeQR);
+            formData.append("keterangan", keterangan);
 
-                fetch("https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec", {
-                    method: "POST",
-                    body: formData,
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status) {
-                            Swal.fire({
-                                icon: "success",
-                                title: "Berhasil!",
-                                text: data.message,
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
-                            setTimeout(() => {
-                                window.location.href = "dashboard.html";
-                            }, 3000);
-                        } else {
-                            Swal.fire({
-                                icon: "error",
-                                title: "Gagal!",
-                                text: data.message,
-                                confirmButtonText: "Kembali"
-                            }).then(() => {
-                                window.location.href = "dashboard.html";
-                            });
-                        }
-                    })
-                    .catch(() => {
-                        Swal.fire({
-                            icon: "error",
-                            title: "Gagal",
-                            text: "Tidak dapat menghubungi server.",
-                            confirmButtonText: "Kembali"
-                        }).then(() => {
+            fetch(ABSEN_URL, {
+                method: "POST",
+                body: formData,
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status) {
+                        Swal.fire({ icon: "success", title: "Berhasil!", text: data.message, timer: 3000, showConfirmButton: false });
+                        setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
+                    } else {
+                        Swal.fire({ icon: "error", title: "Gagal!", text: data.message }).then(() => {
                             window.location.href = "dashboard.html";
                         });
+                    }
+                })
+                .catch(() => {
+                    Swal.fire({ icon: "error", title: "Gagal", text: "Tidak dapat menghubungi server." }).then(() => {
+                        window.location.href = "dashboard.html";
                     });
+                });
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(",")[1];
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function uploadSurat(base64Data, filename) {
+            const res = await fetch(ABSEN_URL, {
+                method: "POST",
+                body: new URLSearchParams({
+                    action: "uploadSurat",
+                    filedata: base64Data,
+                    filename: "Surat_" + user.Nama + "_" + new Date().toISOString() + "_" + filename,
+                }),
+            });
+
+            const data = await res.json();
+            if (!data.status) {
+                Swal.fire({ icon: "error", title: "Upload Gagal", text: data.message });
+                throw new Error("Upload gagal");
             }
         }
     </script>
+
+
 </body>
 
 </html>
