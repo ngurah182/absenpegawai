@@ -179,6 +179,7 @@
                                                 <th>Tanggal</th>
                                                 <th>Waktu</th>
                                                 <th>Keterangan</th>
+                                                <th>Lihat</th>
                                             </tr>
                                         </thead>
                                         <tbody id="absenTable"></tbody>
@@ -245,6 +246,7 @@
                 <td>${item.Tanggal}</td>
                 <td>${item.Waktu}</td>
                 <td>${item.Keterangan}</td>
+                <td>${item.Link ? `<a href="${item.Link}" target="_blank">Lihat Surat</a>` : "-"}</td>
             `;
                     tbody.appendChild(tr);
                 });
