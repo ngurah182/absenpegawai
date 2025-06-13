@@ -63,22 +63,38 @@
         document.getElementById("loginForm").addEventListener("submit", function (e) {
             e.preventDefault();
 
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                document.getElementById("errorMsg").textContent = "Semua kolom wajib diisi.";
+                return;
+            }
+
             const formData = new FormData();
             formData.append("action", "login");
-            formData.append("username", document.getElementById("username").value.trim());
-            formData.append("password", document.getElementById("password").value.trim());
+            formData.append("username", username);
+            formData.append("password", password);
 
             fetch(scriptURL, {
                 method: "POST",
                 body: formData
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error("Respon server tidak valid");
+                    return res.json();
+                })
                 .then(data => {
                     if (data.status) {
                         sessionStorage.setItem("user", JSON.stringify(data.user));
-                        window.location.href = "dashboard.html";
+                        const userLogin = data.user.username?.toLowerCase();
+                        if (userLogin === "admin") {
+                            window.location.href = "admin.html";
+                        } else {
+                            window.location.href = "dashboard.html";
+                        }
                     } else {
-                        document.getElementById("errorMsg").textContent = data.message;
+                        document.getElementById("errorMsg").textContent = data.message || "Login gagal.";
                     }
                 })
                 .catch(err => {
@@ -86,6 +102,8 @@
                 });
         });
     </script>
+
+
 </body>
 
 </html>
