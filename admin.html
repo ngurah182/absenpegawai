@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Rekapan Absensi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <a href="#" class="brand-link">
+                <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" alt="Logo Absen"
+                    class="brand-image img-circle elevation-3" style="opacity: .8;">
+                <span class="brand-text font-weight-light">Absen</span>
+            </a>
+            <div class="sidebar">
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column">
+                        <li class="nav-item">
+                            <a href="rekapan.html" class="nav-link active">
+                                <i class="nav-icon fas fa-list-alt"></i>
+                                <p>Rekapan</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <div class="content-header">
+                <div class="container-fluid">
+                    <h3 class="text-center mb-4">Rekapan Absensi Anda</h3>
+
+                    <!-- Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label>Filter Bulan</label>
+                            <select id="bulanFilter" class="form-control">
+                                <option value="">Semua</option>
+                                <option value="01">Januari</option>
+                                <option value="02">Februari</option>
+                                <option value="03">Maret</option>
+                                <option value="04">April</option>
+                                <option value="05">Mei</option>
+                                <option value="06">Juni</option>
+                                <option value="07">Juli</option>
+                                <option value="08">Agustus</option>
+                                <option value="09">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>Filter Tahun</label>
+                            <select id="tahunFilter" class="form-control">
+                                <option value="">Semua Tahun</option>
+                                <option value="2023">2023</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 align-self-end">
+                            <button class="btn btn-success mt-2" onclick="exportCSV()">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Rekapan -->
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Data Absensi</h5>
+                                </div>
+                                <div class="card-body table-responsive p-0" style="max-height: 400px;">
+                                    <table class="table table-bordered table-hover text-nowrap">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Nama</th>
+                                                <th>Jenis Absen</th>
+                                                <th>Tanggal</th>
+                                                <th>Waktu</th>
+                                                <th>Keterangan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rekapTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grafik -->
+                        <div class="col-md-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Grafik Absensi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="rekapChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="main-footer text-center">
+            <strong>Rekapan Absensi &copy; 2025</strong>
+        </footer>
+    </div>
+
+    <!-- Script -->
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+        if (!user || !user.Nama) {
+            window.location.href = "index.html";
+        }
+
+        function logout() {
+            sessionStorage.removeItem("user");
+            window.location.href = "index.html";
+        }
+
+        const scriptURL = "https://script.google.com/macros/s/AKfycbyPpxuE_WI-gK5oymZv-w8PS1fGsp-B8B1S2UugC1lE1PWBBZ_PaYYTVK8MzzXYosjV4g/exec";
+        let allData = [];
+
+        const chartCtx = document.getElementById("rekapChart").getContext("2d");
+        let chartInstance;
+
+        function renderTableAndChart(filteredData) {
+            const tbody = document.getElementById("rekapTable");
+            tbody.innerHTML = "";
+
+            const count = { Datang: 0, Pulang: 0, Izin: 0, Kembali: 0 };
+
+            filteredData.forEach((item, i) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${item.Nama}</td>
+          <td>${item.Jenis}</td>
+          <td>${item.Tanggal}</td>
+          <td>${item.Waktu}</td>
+          <td>${item.Keterangan}</td>
+        `;
+                tbody.appendChild(tr);
+
+                if (item.Jenis && count[item.Jenis] !== undefined) {
+                    count[item.Jenis]++;
+                }
+            });
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(chartCtx, {
+                type: "pie",
+                data: {
+                    labels: ["Datang", "Pulang", "Izin", "Kembali"],
+                    datasets: [{
+                        label: "Jumlah",
+                        backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8"],
+                        borderColor: "#fff",
+                        borderWidth: 2,
+                        data: [
+                            count.Datang,
+                            count.Pulang,
+                            count.Izin,
+                            count.Kembali
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.label || '';
+                                    let value = context.parsed || 0;
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyFilter() {
+            const bulan = document.getElementById("bulanFilter").value;
+            const tahun = document.getElementById("tahunFilter").value;
+
+            const filtered = allData.filter(item => {
+                const [y, m] = item.Tanggal.split("-");
+                if (tahun && tahun !== y) return false;
+                if (bulan && bulan !== m) return false;
+                return true;
+            });
+
+
+            renderTableAndChart(filtered);
+        }
+
+        function exportCSV() {
+            let csv = "No,Nama,Jenis Absen,Tanggal,Waktu,Keterangan\n";
+            const rows = document.querySelectorAll("#rekapTable tr");
+            rows.forEach((row, i) => {
+                const cols = row.querySelectorAll("td");
+                const rowData = Array.from(cols).map(col => `"${col.innerText}"`).join(",");
+                csv += `${rowData}\n`;
+            });
+
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `rekapan_absensi_${user.Nama}.csv`;
+            link.click();
+        }
+
+        fetch(`${scriptURL}?action=list`)
+            .then(res => res.json())
+            .then(data => {
+                allData = data;
+                applyFilter();
+            })
+            .catch(err => console.error("Gagal memuat data:", err));
+
+        document.getElementById("bulanFilter").addEventListener("change", applyFilter);
+        document.getElementById("tahunFilter").addEventListener("change", applyFilter);
+    </script>
+</body>
+
+</html>
