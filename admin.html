@@ -165,7 +165,7 @@
             const tbody = document.getElementById("rekapTable");
             tbody.innerHTML = "";
 
-            const count = { Datang: 0, Pulang: 0, Izin: 0, Kembali: 0 };
+            const count = { Datang: 0, Pulang: 0, Izin: 0, Kembali: 0, "Tidak Masuk": 0 };
 
             filteredData.forEach((item, i) => {
                 const tr = document.createElement("tr");
@@ -189,20 +189,22 @@
             chartInstance = new Chart(chartCtx, {
                 type: "pie",
                 data: {
-                    labels: ["Datang", "Pulang", "Izin", "Kembali"],
+                    labels: ["Datang", "Pulang", "Izin", "Kembali", "Tidak Masuk"],
                     datasets: [{
                         label: "Jumlah",
-                        backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8"],
+                        backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8", "#dc3545"],
                         borderColor: "#fff",
                         borderWidth: 2,
                         data: [
-                            count.Datang,
-                            count.Pulang,
-                            count.Izin,
-                            count.Kembali
+                            count["Datang"],
+                            count["Pulang"],
+                            count["Izin"],
+                            count["Kembali"],
+                            count["Tidak Masuk"]
                         ]
                     }]
-                },
+                }, // <-- koma di sini penting!
+
                 options: {
                     responsive: true,
                     plugins: {
@@ -254,7 +256,7 @@
             link.click();
         }
 
-        fetch(`${scriptURL}?action=list`)
+        fetch(`${scriptURL}?action=listAll`)
             .then(res => res.json())
             .then(data => {
                 allData = data;
