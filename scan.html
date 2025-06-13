@@ -105,9 +105,13 @@
                         return;
                     }
 
-                    const base64Data = await toBase64(file);
-                    await uploadSurat(base64Data, file.name);
-                    kirimAbsen("", ket);
+                    try {
+                        const base64Data = await toBase64(file);
+                        const linkSurat = await uploadSurat(base64Data, file.name);
+                        kirimAbsen("", ket, linkSurat); // ✅ sekarang sudah mengirim link yang benar
+                    } catch (error) {
+                        console.error("Gagal upload surat:", error);
+                    }
                 } else {
                     // Jenis Izin, simpan keterangan lalu lanjut QR
                     user.Keterangan = ket;
@@ -116,6 +120,7 @@
                     startScanner();
                 }
             });
+
         } else {
             reader.classList.remove("hidden");
             startScanner();
@@ -130,7 +135,7 @@
             });
         }
 
-        function kirimAbsen(kodeQR, keterangan) {
+        function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
             const formData = new FormData();
             formData.append("action", "absen");
             formData.append("id", user.Id);
@@ -139,6 +144,7 @@
             formData.append("jenis", jenis);
             formData.append("kodeQR", kodeQR);
             formData.append("keterangan", keterangan);
+            formData.append("link", linkSurat);
 
             fetch(ABSEN_URL, {
                 method: "POST",
@@ -162,6 +168,7 @@
                 });
         }
 
+
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -181,6 +188,7 @@
                     action: "uploadSurat",
                     filedata: base64Data,
                     filename: "Surat_" + user.Nama + "_" + new Date().toISOString() + "_" + filename,
+                    nama: user.Nama
                 }),
             });
 
@@ -189,7 +197,10 @@
                 Swal.fire({ icon: "error", title: "Upload Gagal", text: data.message });
                 throw new Error("Upload gagal");
             }
+            return data.link; // pastikan Apps Script mengirim 'link'
         }
+
+
     </script>
 
 
