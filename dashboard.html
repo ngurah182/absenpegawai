@@ -111,7 +111,7 @@
 
                     <!-- Ringkasan Absen -->
                     <div class="row text-center mb-4">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <div class="small-box bg-success">
                                 <div class="inner">
                                     <h4 id="datang">0</h4>
@@ -119,7 +119,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <div class="small-box bg-primary">
                                 <div class="inner">
                                     <h4 id="pulang">0</h4>
@@ -127,7 +127,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <div class="small-box bg-warning">
                                 <div class="inner">
                                     <h4 id="izin">0</h4>
@@ -135,7 +135,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
+                    </div>
+
+                    <div class="row text-center mb-4">
+                        <div class="col-sm-4">
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h4 id="kembali">0</h4>
@@ -143,7 +146,20 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-sm-4">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h4 id="tidak_masuk">0</h4>
+                                    <p>Tidak Masuk</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Kolom kosong biar tetap simetris -->
+                        <div class="col-sm-4">
+                            <!-- Bisa diisi ikon, catatan, atau dibiarkan kosong -->
+                        </div>
                     </div>
+
 
                     <!-- Tabel & Grafik -->
                     <div class="row">
@@ -223,43 +239,62 @@
                 userData.forEach((item, i) => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-                        <td>${i + 1}</td>
-                        <td>${item.Nama}</td>
-                        <td>${item.Jenis}</td>
-                        <td>${item.Tanggal}</td>
-                        <td>${item.Waktu}</td>
-                        <td>${item.Keterangan}</td>
-                    `;
+                <td>${i + 1}</td>
+                <td>${item.Nama}</td>
+                <td>${item.Jenis}</td>
+                <td>${item.Tanggal}</td>
+                <td>${item.Waktu}</td>
+                <td>${item.Keterangan}</td>
+            `;
                     tbody.appendChild(tr);
                 });
 
-                // Rekap
-                const count = { Datang: 0, Pulang: 0, Izin: 0, Kembali: 0 };
+                // Rekap (tambahkan Tidak Masuk)
+                const count = {
+                    Datang: 0,
+                    Pulang: 0,
+                    Izin: 0,
+                    Kembali: 0,
+                    "Tidak Masuk": 0
+                };
+
                 userData.forEach(item => {
-                    if (item.Jenis && count[item.Jenis] !== undefined) {
-                        count[item.Jenis]++;
-                    }
+                    const jenis = item.Jenis?.toLowerCase().trim();
+                    if (jenis === "datang") count.Datang++;
+                    else if (jenis === "pulang") count.Pulang++;
+                    else if (jenis === "izin") count.Izin++;
+                    else if (jenis === "kembali") count.Kembali++;
+                    else if (jenis === "tidak masuk") count["Tidak Masuk"]++;
                 });
 
+                // Tampilkan jumlah (jika ada elemen HTML-nya)
                 document.getElementById("datang").textContent = count.Datang;
                 document.getElementById("pulang").textContent = count.Pulang;
                 document.getElementById("izin").textContent = count.Izin;
                 document.getElementById("kembali").textContent = count.Kembali;
+                document.getElementById("tidak_masuk").textContent = count["Tidak Masuk"];
 
-                // Grafik
+                // Grafik termasuk Tidak Masuk
                 const ctx = document.getElementById("absenChart").getContext("2d");
                 new Chart(ctx, {
                     type: "pie",
                     data: {
-                        labels: ["Datang", "Pulang", "Izin", "Kembali"],
+                        labels: ["Datang", "Pulang", "Izin", "Kembali", "Tidak Masuk"],
                         datasets: [{
                             data: [
                                 count.Datang,
                                 count.Pulang,
                                 count.Izin,
-                                count.Kembali
+                                count.Kembali,
+                                count["Tidak Masuk"]
                             ],
-                            backgroundColor: ["#28a745", "#007bff", "#ffc107", "#17a2b8"]
+                            backgroundColor: [
+                                "#28a745", // Datang
+                                "#007bff", // Pulang
+                                "#ffc107", // Izin
+                                "#17a2b8", // Kembali
+                                "#dc3545"  // Tidak Masuk
+                            ]
                         }]
                     },
                     options: {
