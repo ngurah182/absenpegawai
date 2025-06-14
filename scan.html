@@ -141,6 +141,11 @@ function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
         return;
     }
 
+    // Perlakukan "Tidak Masuk" seperti "Izin"
+    if (keterangan === "Tidak Masuk") {
+        keterangan = "Izin";
+    }
+
     if (!kodeQR || !keterangan) {
         Swal.fire({ icon: "warning", title: "Data Kurang", text: "Kode QR dan keterangan wajib diisi." });
         return;
