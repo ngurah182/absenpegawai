@@ -135,32 +135,49 @@
             });
         }
 
-function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
+function kirimAbsen(kodeQR, jenisAbsen, keterangan, linkSurat = "") {
+    // Validasi user
     if (!user || !jenis) {
         Swal.fire({ icon: "error", title: "Data Tidak Lengkap", text: "Data pengguna atau jenis absen belum tersedia." });
         return;
     }
 
-    // Perlakukan "Tidak Masuk" seperti "Izin"
-    if (keterangan === "Tidak Masuk") {
-        keterangan = "Izin";
-    }
-
-    if (!kodeQR || !keterangan) {
-        Swal.fire({ icon: "warning", title: "Data Kurang", text: "Kode QR dan keterangan wajib diisi." });
+    // Validasi keterangan
+    if (!keterangan || keterangan.trim() === "") {
+        Swal.fire({ icon: "warning", title: "Keterangan Wajib", text: "Silakan isi keterangan terlebih dahulu." });
         return;
     }
 
+    // Validasi berdasarkan jenis absen
+    if (jenisAbsen === "Izin") {
+        if (!kodeQR) {
+            Swal.fire({ icon: "warning", title: "QR Wajib", text: "Silakan scan QR untuk absen Izin." });
+            return;
+        }
+    }
+
+    if (jenisAbsen === "Tidak Masuk") {
+        if (!linkSurat) {
+            Swal.fire({ icon: "warning", title: "Surat Wajib", text: "Silakan lampirkan surat keterangan untuk Tidak Masuk." });
+            return;
+        }
+        // Tidak perlu QR
+        kodeQR = "";
+    }
+
+    // Siapkan data untuk dikirim
     const formData = new FormData();
     formData.append("action", "absen");
     formData.append("id", user.Id);
     formData.append("nama", user.Nama);
     formData.append("nip", user.NIP);
-    formData.append("jenis", jenis);
+    formData.append("jenis", jenis); // Datang / Pulang
     formData.append("kodeQR", kodeQR);
-    formData.append("keterangan", keterangan);
+    formData.append("keterangan", keterangan); // keterangan asli dari user, tidak diubah
     formData.append("link", linkSurat);
+    formData.append("tipe", jenisAbsen); // Tipe absen: "Izin", "Tidak Masuk"
 
+    // Tampilkan loading
     Swal.fire({
         title: 'Mengirim...',
         text: 'Harap tunggu sebentar.',
@@ -170,6 +187,7 @@ function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
         }
     });
 
+    // Kirim data ke server
     fetch(ABSEN_URL, {
         method: "POST",
         body: formData,
@@ -177,16 +195,32 @@ function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
     .then(res => res.json())
     .then(data => {
         if (data.status) {
-            Swal.fire({ icon: "success", title: "Berhasil!", text: data.message, timer: 3000, showConfirmButton: false });
-            setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
+            Swal.fire({
+                icon: "success",
+                title: "Berhasil!",
+                text: data.message,
+                timer: 3000,
+                showConfirmButton: false
+            });
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 3000);
         } else {
-            Swal.fire({ icon: "error", title: "Gagal!", text: data.message }).then(() => {
+            Swal.fire({
+                icon: "error",
+                title: "Gagal!",
+                text: data.message
+            }).then(() => {
                 window.location.href = "dashboard.html";
             });
         }
     })
     .catch(() => {
-        Swal.fire({ icon: "error", title: "Gagal", text: "Tidak dapat menghubungi server." }).then(() => {
+        Swal.fire({
+            icon: "error",
+            title: "Gagal",
+            text: "Tidak dapat menghubungi server."
+        }).then(() => {
             window.location.href = "dashboard.html";
         });
     });
