@@ -135,38 +135,57 @@
             });
         }
 
-        function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
-            const formData = new FormData();
-            formData.append("action", "absen");
-            formData.append("id", user.Id);
-            formData.append("nama", user.Nama);
-            formData.append("nip", user.NIP);
-            formData.append("jenis", jenis);
-            formData.append("kodeQR", kodeQR);
-            formData.append("keterangan", keterangan);
-            formData.append("link", linkSurat);
+function kirimAbsen(kodeQR, keterangan, linkSurat = "") {
+    if (!user || !jenis) {
+        Swal.fire({ icon: "error", title: "Data Tidak Lengkap", text: "Data pengguna atau jenis absen belum tersedia." });
+        return;
+    }
 
-            fetch(ABSEN_URL, {
-                method: "POST",
-                body: formData,
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status) {
-                        Swal.fire({ icon: "success", title: "Berhasil!", text: data.message, timer: 3000, showConfirmButton: false });
-                        setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
-                    } else {
-                        Swal.fire({ icon: "error", title: "Gagal!", text: data.message }).then(() => {
-                            window.location.href = "dashboard.html";
-                        });
-                    }
-                })
-                .catch(() => {
-                    Swal.fire({ icon: "error", title: "Gagal", text: "Tidak dapat menghubungi server." }).then(() => {
-                        window.location.href = "dashboard.html";
-                    });
-                });
+    if (!kodeQR || !keterangan) {
+        Swal.fire({ icon: "warning", title: "Data Kurang", text: "Kode QR dan keterangan wajib diisi." });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("action", "absen");
+    formData.append("id", user.Id);
+    formData.append("nama", user.Nama);
+    formData.append("nip", user.NIP);
+    formData.append("jenis", jenis);
+    formData.append("kodeQR", kodeQR);
+    formData.append("keterangan", keterangan);
+    formData.append("link", linkSurat);
+
+    Swal.fire({
+        title: 'Mengirim...',
+        text: 'Harap tunggu sebentar.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
+    });
+
+    fetch(ABSEN_URL, {
+        method: "POST",
+        body: formData,
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status) {
+            Swal.fire({ icon: "success", title: "Berhasil!", text: data.message, timer: 3000, showConfirmButton: false });
+            setTimeout(() => { window.location.href = "dashboard.html"; }, 3000);
+        } else {
+            Swal.fire({ icon: "error", title: "Gagal!", text: data.message }).then(() => {
+                window.location.href = "dashboard.html";
+            });
+        }
+    })
+    .catch(() => {
+        Swal.fire({ icon: "error", title: "Gagal", text: "Tidak dapat menghubungi server." }).then(() => {
+            window.location.href = "dashboard.html";
+        });
+    });
+}
 
 
         function toBase64(file) {
